@@ -6,7 +6,7 @@ In general to run:
 
 ```bash
 $ g++ ./1-1.cpp
-$ input.txt | ./a.out
+$ cat input.txt | ./a.out
 
 ```
 
