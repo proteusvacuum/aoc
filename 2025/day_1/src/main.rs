@@ -61,7 +61,10 @@ fn solve_part2(input: &str) -> i32 {
             Direction::Left => position - movement.clicks,
             Direction::Right => position + movement.clicks,
         };
-        let crossings = new_position.div_euclid(100).abs();
+        let crossings = match movement.direction {
+            Direction::Left => (movement.clicks + (100 - position).rem_euclid(100)).div_euclid(100),
+            Direction::Right => (position + movement.clicks).div_euclid(100),
+        };
         count += crossings;
         position = new_position.rem_euclid(100);
     }
