@@ -26,6 +26,28 @@ fn solve_part1(input: &str) -> usize {
     sum
 }
 
+fn solve_part2_idiomatically(input: &str) -> usize {
+    const BANK_SIZE: usize = 12;
+    parse_input(input)
+        .iter()
+        .map(|bank| {
+            let mut start = 0;
+            let mut result: usize = 0;
+            for digits_left in (1..=BANK_SIZE).rev() {
+                let (idx, &val) = dbg!(&bank[start..bank.len() - digits_left + 1])
+                    .iter()
+                    .enumerate()
+                    .min_by_key(|&(_, v)| std::cmp::Reverse(v))
+                    .unwrap();
+                dbg!(val);
+                result = result * 10 + val as usize;
+                start += idx + 1
+            }
+            result
+        })
+        .sum()
+}
+
 fn solve_part2(input: &str) -> usize {
     const BANK_SIZE: usize = 12;
     let mut sum: usize = 0;
@@ -70,7 +92,6 @@ mod tests {
     use super::*;
     static SAMPLE1: &str = include_str!("../test_1.txt");
 
-    #[ignore]
     #[test]
     fn test_part1() {
         assert_eq!(solve_part1(SAMPLE1), 357);
@@ -78,6 +99,13 @@ mod tests {
 
     #[test]
     fn test_part2() {
+        let input = include_str!("../input.txt");
         assert_eq!(solve_part2(SAMPLE1), 3121910778619);
+        assert_eq!(solve_part2_idiomatically(input), solve_part2(input));
+        assert_eq!(solve_part2_idiomatically(SAMPLE1), 3121910778619);
+        assert_eq!(solve_part2_idiomatically("987654321111111\n"), 987654321111);
+        assert_eq!(solve_part2_idiomatically("811111111111119\n"), 811111111119);
+        assert_eq!(solve_part2_idiomatically("234234234234278\n"), 434234234278);
+        assert_eq!(solve_part2_idiomatically("818181911112111\n"), 888911112111);
     }
 }
