@@ -54,7 +54,7 @@ impl<T> Grid<T> {
     fn set_right(&mut self, coord: Coord, value: T) {
         let nx = coord.x + 1;
         let ny = coord.y;
-        if nx > self.width {
+        if nx >= self.width {
             return;
         }
         let new_coord = Coord { x: nx, y: ny };
@@ -171,31 +171,51 @@ fn solve_part2_again(input: &str) -> usize {
 
     let mut count = 1;
     let grid = parse_input(input);
-    let mut new_grid = grid.clone();
+    let mut values_grid: Grid<usize> =
+        Grid::new(grid.height, grid.width, vec![0; grid.width * grid.height]);
+
+    let (s_coord, _) = grid
+        .iter_values()
+        .find(|(coord, c)| c.unwrap() == 'S')
+        .unwrap();
+
+    values_grid.set(s_coord, 1);
 
     grid.iter_values().for_each(|(coord, c)| {
         let current_char = c.unwrap();
-        if let Some((_, above)) = new_grid.above(&coord) {
+        if let Some((_, above)) = values_grid.above(&coord) {
             match current_char {
-                '.' => match above {
-                    'S' | '|' => {
-                        new_grid.set(coord, '|');
-                    }
-                    _ => {}
-                },
-                '^' => match above {
-                    'S' | '|' => {
-                        // On either side we set it as a '|'
-                        new_grid.set_left(coord, '|');
-                        new_grid.set_right(coord, '|');
-                        count *= 2;
-                    }
-                    _ => {}
-                },
+                '.' => {
+                    let current = values_grid.get(coord).unwrap_or(0);
+                    values_grid.set(coord, current + above);
+                }
+                '^' => {
+                    let current_left = values_grid
+                        .get(Coord {
+                            x: coord.x - 1,
+                            y: coord.y,
+                        })
+                        .unwrap_or(0);
+                    values_grid.set_left(coord, current_left + above);
+                    let current_right = values_grid
+                        .get(Coord {
+                            x: coord.x + 1,
+                            y: coord.y,
+                        })
+                        .unwrap_or(0);
+                    values_grid.set_right(coord, current_right + above);
+                }
                 _ => {}
             };
         }
     });
+
+    // println!("{}", values_grid);
+    let count = values_grid
+        .iter_values()
+        .filter(|(coord, _)| coord.y == values_grid.height - 1)
+        .map(|(_, v)| v.unwrap_or(0))
+        .sum();
 
     count
 }
@@ -247,7 +267,7 @@ fn solve_part2(input: &str) -> usize {
 fn main() {
     let input = include_str!("../input.txt");
     println!("Part 1: {}", solve_part1(input));
-    println!("Part 2: {}", solve_part2(input));
+    println!("Part 2: {}", solve_part2_again(input));
 }
 
 #[cfg(test)]
