@@ -21,62 +21,60 @@ fn parse_input_1(input: &str) -> (Vec<Vec<usize>>, Vec<&str>) {
     (values, operators)
 }
 
-fn parse_input_2(input: &str) -> (Vec<Vec<usize>>, Vec<&str>) {
-    // Read characters right to left.
-    // We know the split boundary based on the index of the operator.
-
-    let mut lines: Vec<String> = input.lines().map(|l| l.chars().rev().collect()).collect();
-    let operators = lines[lines.len() - 1].clone();
-    lines = lines[0..lines.len() - 1].to_vec();
-
-    let number_boundaries: Vec<usize> = operators
-        .char_indices()
-        .filter(|(_, ch)| !ch.is_whitespace())
-        .map(|(idx, _)| idx)
+fn parse_input_2(input: &str) -> (Vec<Vec<usize>>, Vec<String>) {
+    // Read each column.
+    let lines: Vec<&str> = input.lines().collect();
+    let reversed_lines: Vec<String> = lines
+        .iter()
+        .map(|l| l.chars().rev().collect::<String>())
         .collect();
 
-    // Read number_boundaries chars from each line
-    // Read top to bottom, as we did in part one
-    dbg!(&lines, &operators, &number_boundaries);
+    // collect characters until I get an operator, then skip a character and start again.
 
-    dbg!(lines
-        .iter()
-        .enumerate()
-        .map(|(line_num, line)| {
-            number_boundaries
-                .iter()
-                .enumerate()
-                .map(|(n, nb)| {
-                    line.chars()
-                        .skip(number_boundaries[n - 1])
-                        .take(*nb)
-                        .collect::<String>()
-                })
-                .collect()
-        })
-        .collect::<Vec<String>>());
+    let mut values: Vec<Vec<usize>> = vec![];
+    let mut operators: Vec<String> = vec![];
 
-    for (line_num, line) in lines.iter().enumerate() {
-        dbg!(line
-            .chars()
-            .take(number_boundaries[0] + 1)
-            .collect::<String>());
-    }
+    let number_length = reversed_lines.len();
+    let num_columns = reversed_lines[0].len();
+    let mut row_index = 0 as usize;
+    let mut column_index: usize = 0;
+    let mut nums: Vec<usize> = vec![];
 
-    let num_items = input
-        .lines()
-        .next()
-        .unwrap()
-        .split_ascii_whitespace()
-        .clone()
-        .count();
-    let mut values: Vec<Vec<usize>> = vec![vec![]; num_items];
-    let mut operators: Vec<&str> = vec![];
-    for line in input.lines() {
-        for (idx, value) in line.split_ascii_whitespace().enumerate() {
-            match value {
-                "*" | "+" => operators.push(value),
-                _ => values[idx].push(value.parse::<usize>().unwrap()),
+    loop {
+        if column_index >= num_columns {
+            break;
+        }
+        dbg!(column_index);
+        // the columns
+        let mut value = String::new();
+        loop {
+            if row_index >= number_length {
+                nums.push(value.parse().unwrap());
+                row_index = 0;
+                column_index += 1;
+                break;
+            }
+            if let Some(ch) = reversed_lines[row_index].chars().nth(column_index) {
+                match ch {
+                    '+' | '*' => {
+                        operators.push(ch.to_string());
+                        nums.push(value.parse().unwrap());
+                        values.push(nums.clone());
+                        nums = vec![];
+                        row_index = 0;
+                        column_index += 2;
+                        break;
+                    }
+                    ' ' => {
+                        row_index += 1;
+                    }
+                    _ => {
+                        value.push(ch);
+                        row_index += 1;
+                    }
+                }
+            } else {
+                panic!()
             }
         }
     }
@@ -102,7 +100,7 @@ fn solve_part2(input: &str) -> usize {
     values
         .iter()
         .enumerate()
-        .map(|(i, v)| match operators[i] {
+        .map(|(i, v)| match operators[i].as_str() {
             "*" => v.iter().fold(1 as usize, |num, accum| accum * num),
             "+" => v.iter().sum(),
             _ => panic!(),
